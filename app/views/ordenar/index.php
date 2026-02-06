@@ -1,46 +1,12 @@
 <?php
-/**
- * Vista de formulario de pedido
- * Muestra formulario con producto pre-seleccionado y su imagen
- */
-
-// Validar que las variables existen
 $selectedProduct = $selectedProduct ?? null;
 $selectedProductId = $selectedProductId ?? null;
 $allProducts = $allProducts ?? [];
+$footerContent = loadContent('footer');
+$whatsappUrl = getContent($footerContent, 'social.whatsapp', '');
+$whatsappNumber = class_exists('SiteContent') ? SiteContent::whatsappUrlToNumber($whatsappUrl) : '';
 ?>
-
-<script>
-    // Marcar el body inmediatamente para aplicar estilos específicos
-    (function() {
-        if (document.body) {
-            document.body.classList.remove('home-page');
-            document.body.classList.remove('categorias-page');
-            document.body.classList.remove('product-detail-page');
-            document.body.classList.add('ordenar-page');
-        } else {
-            var observer = new MutationObserver(function(mutations) {
-                if (document.body) {
-                    document.body.classList.remove('home-page');
-                    document.body.classList.remove('categorias-page');
-                    document.body.classList.remove('product-detail-page');
-                    document.body.classList.add('ordenar-page');
-                    observer.disconnect();
-                }
-            });
-            observer.observe(document.documentElement, { childList: true });
-            
-            document.addEventListener('DOMContentLoaded', function() {
-                if (document.body) {
-                    document.body.classList.remove('home-page');
-                    document.body.classList.remove('categorias-page');
-                    document.body.classList.remove('product-detail-page');
-                    document.body.classList.add('ordenar-page');
-                }
-            });
-        }
-    })();
-</script>
+<div class="js-page-zone d-none" data-page="ordenar"></div>
 
 <style>
     /* Solo estilos que no se pueden reemplazar con Bootstrap - Colores personalizados */
@@ -102,7 +68,7 @@ $allProducts = $allProducts ?? [];
                     <!-- Formulario -->
                     <div class="<?php echo $selectedProduct ? 'col-lg-8' : 'col-lg-12'; ?> d-flex">
                         <div class="card shadow-sm p-4 p-lg-5 bg-light h-100 w-100">
-                            <form id="orderForm" onsubmit="return enviarWhatsApp(event)">
+                            <form id="orderForm" data-whatsapp-number="<?php echo htmlspecialchars($whatsappNumber); ?>" onsubmit="return enviarWhatsApp(event)">
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <label class="form-label">Nombre Completo *</label>
@@ -130,7 +96,6 @@ $allProducts = $allProducts ?? [];
                                                     </option>
                                                 <?php endforeach; ?>
                                             <?php endif; ?>
-                                            <option value="otro" data-nombre="Producto Personalizado" data-precio="Por definir">Otro / Personalizado</option>
                                         </select>
                                     </div>
                                     <div class="col-md-6">
@@ -147,15 +112,7 @@ $allProducts = $allProducts ?? [];
                                             <?php 
                                                     endif;
                                                 endforeach;
-                                            else:
-                                            ?>
-                                                <option value="XS">XS - Extra Chica</option>
-                                                <option value="S">S - Chica</option>
-                                                <option value="M">M - Mediana</option>
-                                                <option value="L">L - Grande</option>
-                                                <option value="XL">XL - Extra Grande</option>
-                                                <option value="Talla Única">Talla Única</option>
-                                            <?php endif; ?>
+                                            endif; ?>
                                         </select>
                                     </div>
                                     <div class="col-md-6">
@@ -196,83 +153,3 @@ $allProducts = $allProducts ?? [];
         </div>
     </div>
 </div>
-
-<script>
-    // Número de WhatsApp del administrador (sin el +)
-    const WHATSAPP_ADMIN = '529541364103';
-    
-    // Función para enviar pedido por WhatsApp
-    function enviarWhatsApp(event) {
-        event.preventDefault();
-        
-        // Obtener valores del formulario
-        const nombre = document.getElementById('inputName').value.trim();
-        const email = document.getElementById('inputEmail').value.trim();
-        const telefono = document.getElementById('inputPhone').value.trim();
-        const ciudad = document.getElementById('inputCity').value.trim();
-        const mensaje = document.getElementById('inputMessage').value.trim();
-        const tallaSelect = document.getElementById('inputSize');
-        const talla = tallaSelect.options[tallaSelect.selectedIndex]?.value || 'No especificada';
-        
-        // Obtener producto seleccionado
-        const productSelect = document.getElementById('productSelect');
-        const selectedOption = productSelect.options[productSelect.selectedIndex];
-        const productoNombre = selectedOption?.dataset.nombre || 'No especificado';
-        const productoPrecio = selectedOption?.dataset.precio || 'Por definir';
-        
-        // Validar campos requeridos
-        if (!nombre || !email || !telefono || !productSelect.value) {
-            alert('Por favor completa todos los campos requeridos');
-            return false;
-        }
-        
-        // Construir mensaje de WhatsApp
-        let whatsappMessage = `🛒 *NUEVO PEDIDO - OAXACA TEXTILES*\n\n`;
-        whatsappMessage += `━━━━━━━━━━━━━━━━━━━━\n`;
-        whatsappMessage += `📦 *PRODUCTO*\n`;
-        whatsappMessage += `• Artículo: ${productoNombre}\n`;
-        whatsappMessage += `• Precio: $${productoPrecio} MXN\n`;
-        whatsappMessage += `• Talla: ${talla}\n`;
-        whatsappMessage += `━━━━━━━━━━━━━━━━━━━━\n`;
-        whatsappMessage += `👤 *DATOS DEL CLIENTE*\n`;
-        whatsappMessage += `• Nombre: ${nombre}\n`;
-        whatsappMessage += `• Teléfono: ${telefono}\n`;
-        whatsappMessage += `• Email: ${email}\n`;
-        if (ciudad) {
-            whatsappMessage += `• Ciudad: ${ciudad}\n`;
-        }
-        if (mensaje) {
-            whatsappMessage += `━━━━━━━━━━━━━━━━━━━━\n`;
-            whatsappMessage += `💬 *MENSAJE*\n`;
-            whatsappMessage += `${mensaje}\n`;
-        }
-        whatsappMessage += `━━━━━━━━━━━━━━━━━━━━\n`;
-        whatsappMessage += `📅 Fecha: ${new Date().toLocaleDateString('es-MX')}\n`;
-        whatsappMessage += `🌐 Enviado desde: oaxacatextiles.mx`;
-        
-        // Codificar mensaje para URL
-        const encodedMessage = encodeURIComponent(whatsappMessage);
-        
-        // Crear URL de WhatsApp
-        const whatsappUrl = `https://wa.me/${WHATSAPP_ADMIN}?text=${encodedMessage}`;
-        
-        // Abrir WhatsApp en nueva ventana
-        window.open(whatsappUrl, '_blank');
-        
-        return false;
-    }
-    
-    // Actualizar la vista previa cuando cambie el select
-    document.addEventListener('DOMContentLoaded', function() {
-        const productSelect = document.getElementById('productSelect');
-        if (productSelect) {
-            productSelect.addEventListener('change', function() {
-                const productId = this.value;
-                if (productId && productId !== 'otro' && productId !== '') {
-                    // Redirigir a la misma página con el nuevo producto seleccionado
-                    window.location.href = '<?php echo BASE_URL; ?>/ordenar?producto=' + productId;
-                }
-            });
-        }
-    });
-</script>

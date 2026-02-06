@@ -23,7 +23,7 @@ $metaContent = loadContent('meta');
     <!-- Custom CSS -->
     <link href="<?php echo ASSETS_URL; ?>/css/style.css" rel="stylesheet">
 </head>
-<body>
+<body data-base-url="<?php echo htmlspecialchars(BASE_URL); ?>">
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg fixed-top bg-light border-bottom py-3">
         <div class="container">
@@ -175,7 +175,9 @@ $metaContent = loadContent('meta');
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Custom JS -->
     <script src="<?php echo ASSETS_URL; ?>/js/main.js"></script>
+    <script src="<?php echo ASSETS_URL; ?>/js/pages.js"></script>
+    <script src="<?php echo ASSETS_URL; ?>/js/categorias.js"></script>
+    <script src="<?php echo ASSETS_URL; ?>/js/ordenar.js"></script>
 </body>
 </html>

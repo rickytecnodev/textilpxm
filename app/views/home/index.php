@@ -1,8 +1,7 @@
 <?php
-// Vista principal - Adaptada del HTML original
 $homeContent = loadContent('home');
 ?>
-
+<div class="js-page-zone d-none" data-page="home"></div>
 <style>
     /* Solo estilos que no se pueden reemplazar con Bootstrap */
     body.home-page {
@@ -159,34 +158,3 @@ $homeContent = loadContent('home');
         </div>
     </div>
 </section>
-
-<script>
-
-    // Marcar el body para aplicar estilos específicos del home
-    (function() {
-        if (document.body) {
-            document.body.classList.add('home-page');
-        } else {
-            document.addEventListener('DOMContentLoaded', function() {
-                document.body.classList.add('home-page');
-            });
-        }
-    })();
-
-
-    // Smooth scroll for anchor links
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-    });
-</script>

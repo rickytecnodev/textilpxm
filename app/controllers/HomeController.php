@@ -32,20 +32,12 @@ class HomeController extends Controller {
         $allProducts = $this->productModel->getActive();
         
         $metaContent = loadContent('meta');
-        $data = [
+        $data = $this->mergeFlashIntoData([
             'page_title' => getContent($metaContent, 'site.name', 'Oaxaca Textiles | Ropa Típica de Puerto Escondido'),
             'products' => $products ?: [],
             'allProducts' => $allProducts ?: [],
-            'categories' => $categories ?: []
-        ];
-
-        // Obtener mensaje flash si existe
-        $flash = $this->getFlashMessage();
-        if ($flash) {
-            $data['flash_message'] = $flash['message'];
-            $data['flash_type'] = $flash['type'];
-        }
-
+            'categories' => $categories ?: [],
+        ]);
         $this->render('home/index', $data);
     }
 
@@ -78,23 +70,14 @@ class HomeController extends Controller {
         $siteName = getContent($metaContent, 'site.name', 'Oaxaca Textiles');
         $baseTitle = 'Categorías | ' . $siteName;
 
-        // Preparar datos para la vista
-        $data = [
+        $data = $this->mergeFlashIntoData([
             'page_title' => !empty($searchTerm) ? 'Búsqueda: ' . htmlspecialchars($searchTerm) . ' | ' . $siteName : $baseTitle,
             'categoryNames' => $categoryNames,
             'productsByCategory' => $productsByCategory,
             'selectedCategory' => $categoriaSeleccionada,
             'totalProducts' => count($allProducts),
-            'searchTerm' => $searchTerm
-        ];
-
-        // Agregar mensaje flash si existe
-        $flash = $this->getFlashMessage();
-        if ($flash) {
-            $data['flash_message'] = $flash['message'];
-            $data['flash_type'] = $flash['type'];
-        }
-
+            'searchTerm' => $searchTerm,
+        ]);
         $this->render('categorias/index', $data);
     }
 
@@ -139,20 +122,11 @@ class HomeController extends Controller {
         // Obtener productos relacionados (misma categoría, excluyendo el actual)
         $relatedProducts = $this->getRelatedProducts($product['categoria'], $productId);
 
-        // Preparar datos para la vista
-        $data = [
+        $data = $this->mergeFlashIntoData([
             'page_title' => htmlspecialchars($product['nombre']) . ' | Oaxaca Textiles',
             'product' => $product,
-            'relatedProducts' => $relatedProducts
-        ];
-
-        // Agregar mensaje flash si existe
-        $flash = $this->getFlashMessage();
-        if ($flash) {
-            $data['flash_message'] = $flash['message'];
-            $data['flash_type'] = $flash['type'];
-        }
-
+            'relatedProducts' => $relatedProducts,
+        ]);
         $this->render('producto/show', $data);
     }
 
@@ -208,12 +182,7 @@ class HomeController extends Controller {
             return;
         }
 
-        $flash = $this->getFlashMessage();
-        $this->render('login', [
-            'page_title' => 'Iniciar Sesión',
-            'flash_message' => $flash['message'] ?? null,
-            'flash_type' => $flash['type'] ?? 'info',
-        ]);
+        $this->render('login', $this->mergeFlashIntoData(['page_title' => 'Iniciar Sesión']));
     }
 
     /**
@@ -259,12 +228,7 @@ class HomeController extends Controller {
             }
         }
 
-        $flash = $this->getFlashMessage();
-        $this->render('register', [
-            'page_title' => 'Crear Cuenta',
-            'flash_message' => $flash['message'] ?? null,
-            'flash_type' => $flash['type'] ?? 'info',
-        ]);
+        $this->render('register', $this->mergeFlashIntoData(['page_title' => 'Crear Cuenta']));
     }
 
     /**
@@ -304,21 +268,12 @@ class HomeController extends Controller {
         // Obtener todos los productos activos para el select
         $allProducts = $this->productModel->getActive();
         
-        // Preparar datos para la vista
-        $data = [
+        $data = $this->mergeFlashIntoData([
             'page_title' => 'Solicitar Producto | Oaxaca Textiles',
             'selectedProduct' => $selectedProduct,
             'selectedProductId' => $productId,
-            'allProducts' => $allProducts ?: []
-        ];
-        
-        // Agregar mensaje flash si existe
-        $flash = $this->getFlashMessage();
-        if ($flash) {
-            $data['flash_message'] = $flash['message'];
-            $data['flash_type'] = $flash['type'];
-        }
-        
+            'allProducts' => $allProducts ?: [],
+        ]);
         $this->render('ordenar/index', $data);
     }
 

@@ -1,8 +1,4 @@
-<?php
-$page_title = $page_title ?? 'Iniciar Sesión';
-$flash_message = $flash_message ?? null;
-$flash_type = $flash_type ?? 'info';
-?>
+<?php $page_title = $page_title ?? 'Iniciar Sesión'; ?>
 <section class="py-5" style="margin-top: 6rem;">
     <div class="container">
         <div class="row justify-content-center">
@@ -10,12 +6,7 @@ $flash_type = $flash_type ?? 'info';
                 <div class="card shadow-sm">
                     <div class="card-body p-4">
                         <h1 class="h4 fw-bold mb-3 text-center">Iniciar sesión</h1>
-                        <?php if ($flash_message): ?>
-                        <div class="alert alert-<?php echo $flash_type === 'danger' ? 'danger' : 'success'; ?> alert-dismissible fade show">
-                            <?php echo htmlspecialchars($flash_message); ?>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-                        </div>
-                        <?php endif; ?>
+                        <?php require APP_PATH . '/views/partials/_flash_alert.php'; ?>
                         <form method="post" action="<?php echo BASE_URL; ?>/login">
                             <div class="mb-3">
                                 <label for="email" class="form-label">Correo electrónico</label>

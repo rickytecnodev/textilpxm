@@ -42,7 +42,7 @@ class Controller {
     }
 
     /**
-     * Verificar si hay un mensaje flash
+     * Verificar si hay un mensaje flash (consume el mensaje de sesión)
      */
     public function getFlashMessage() {
         if (isset($_SESSION['flash_message'])) {
@@ -53,6 +53,19 @@ class Controller {
             return ['message' => $message, 'type' => $type];
         }
         return null;
+    }
+
+    /**
+     * Fusionar mensaje flash en el array de datos para la vista.
+     * Evita repetir getFlashMessage + array en cada acción.
+     * @param array $data Datos a pasar a la vista
+     * @return array $data con flash_message y flash_type añadidos (o null si no hay)
+     */
+    protected function mergeFlashIntoData(array $data = []) {
+        $flash = $this->getFlashMessage();
+        $data['flash_message'] = $flash['message'] ?? null;
+        $data['flash_type'] = $flash['type'] ?? null;
+        return $data;
     }
 
     /**

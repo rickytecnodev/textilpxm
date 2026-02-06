@@ -9,12 +9,7 @@ $v = function($key) use ($c) { return htmlspecialchars($c[$key] ?? '', ENT_QUOTE
         <h1 class="h5 mb-0">Textos y datos del sitio</h1>
     </div>
 
-    <?php if (!empty($flash_message)): ?>
-        <div class="alert alert-<?php echo ($flash_type ?? '') === 'danger' ? 'danger' : 'success'; ?> alert-dismissible fade show m-1">
-            <?php echo htmlspecialchars($flash_message); ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-        </div>
-    <?php endif; ?>
+    <?php $alert_class = 'm-1'; require APP_PATH . '/views/partials/_flash_alert.php'; ?>
 
     <div class="card-body p-4">
         <form method="post" action="<?php echo BASE_URL; ?>/admin/contenido/guardar" enctype="multipart/form-data">

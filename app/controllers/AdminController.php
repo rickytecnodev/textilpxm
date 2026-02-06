@@ -184,13 +184,10 @@ class AdminController extends Controller {
             exit;
         }
         $products = $this->productModel->getAll();
-        $flash = $this->getFlashMessage();
-        $data = [
+        $data = $this->mergeFlashIntoData([
             'page_title' => 'Productos',
             'products' => $products ?: [],
-            'flash_message' => $flash['message'] ?? null,
-            'flash_type' => $flash['type'] ?? null,
-        ];
+        ]);
         $this->render('admin/products/index', $data, 'admin');
     }
 
@@ -264,15 +261,12 @@ class AdminController extends Controller {
     public function crear() {
         $this->requireAdmin();
         $categories = $this->productModel->getCategoriesAll();
-        $flash = $this->getFlashMessage();
-        $data = [
+        $data = $this->mergeFlashIntoData([
             'page_title' => 'Nuevo producto',
             'product' => null,
             'categories' => $categories ?: [],
-            'flash_message' => $flash['message'] ?? null,
-            'flash_type' => $flash['type'] ?? null,
             'csrf_token' => csrf_token(),
-        ];
+        ]);
         $this->render('admin/products/form', $data, 'admin');
     }
 
@@ -347,15 +341,12 @@ class AdminController extends Controller {
             return;
         }
         $categories = $this->productModel->getCategoriesAll();
-        $flash = $this->getFlashMessage();
-        $data = [
+        $data = $this->mergeFlashIntoData([
             'page_title' => 'Editar producto',
             'product' => $product,
             'categories' => $categories ?: [],
-            'flash_message' => $flash['message'] ?? null,
-            'flash_type' => $flash['type'] ?? null,
             'csrf_token' => csrf_token(),
-        ];
+        ]);
         $this->render('admin/products/form', $data, 'admin');
     }
 
@@ -512,15 +503,12 @@ class AdminController extends Controller {
             $flat = $this->getDefaultContentFlat();
         }
         $whatsappUrl = $flat['footer_social_whatsapp'] ?? '';
-        $flash = $this->getFlashMessage();
-        $data = [
+        $data = $this->mergeFlashIntoData([
             'page_title' => 'Contenido del sitio',
             'content' => $flat,
             'whatsapp_number' => SiteContent::whatsappUrlToNumber($whatsappUrl),
-            'flash_message' => $flash['message'] ?? null,
-            'flash_type' => $flash['type'] ?? null,
             'csrf_token' => csrf_token(),
-        ];
+        ]);
         $this->render('admin/contenido', $data, 'admin');
     }
 

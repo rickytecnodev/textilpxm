@@ -11,11 +11,8 @@ if (empty($product) || !isset($product['id'])) {
     exit;
 }
 
-// Debug temporal - remover en producción
-// echo "<!-- DEBUG: Product ID=" . $product['id'] . " -->";
-// echo "<!-- DEBUG: Product Name=" . htmlspecialchars($product['nombre']) . " -->";
 ?>
-
+<div class="js-page-zone d-none" data-page="product-detail"></div>
 <style>
     /* Solo estilos que no se pueden reemplazar con Bootstrap - Colores personalizados */
     body.product-detail-page {
@@ -44,39 +41,6 @@ if (empty($product) || !isset($product['id'])) {
         line-height: 1.8;
     }
 </style>
-
-<script>
-    // Marcar el body inmediatamente para aplicar estilos específicos de producto
-    // Esto debe ejecutarse ANTES de que se carguen los estilos del home
-    (function() {
-        // Remover clase de home si existe
-        if (document.body) {
-            document.body.classList.remove('home-page');
-            document.body.classList.remove('categorias-page');
-            document.body.classList.add('product-detail-page');
-        } else {
-            // Si el body aún no existe, esperar a que se cree
-            var observer = new MutationObserver(function(mutations) {
-                if (document.body) {
-                    document.body.classList.remove('home-page');
-                    document.body.classList.remove('categorias-page');
-                    document.body.classList.add('product-detail-page');
-                    observer.disconnect();
-                }
-            });
-            observer.observe(document.documentElement, { childList: true });
-            
-            // Fallback con DOMContentLoaded
-            document.addEventListener('DOMContentLoaded', function() {
-                if (document.body) {
-                    document.body.classList.remove('home-page');
-                    document.body.classList.remove('categorias-page');
-                    document.body.classList.add('product-detail-page');
-                }
-            });
-        }
-    })();
-</script>
 
 <div class="mt-5 pt-5" style="min-height: 70vh;">
     <div class="container">
@@ -188,10 +152,3 @@ if (empty($product) || !isset($product['id'])) {
         <?php endif; ?>
     </div>
 </div>
-
-<script>
-    // Marcar el body para aplicar estilos específicos
-    document.addEventListener('DOMContentLoaded', function() {
-        document.body.classList.add('product-detail-page');
-    });
-</script>

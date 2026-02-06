@@ -20,7 +20,7 @@ $admin_site_name_navbar = getContent($navbarContent, 'brand', 'OAXACA TEXTILES')
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
     <link href="<?php echo ASSETS_URL; ?>/css/admin.css" rel="stylesheet">
 </head>
-<body class="bg-light min-vh-100">
+<body class="bg-light min-vh-100" data-base-url="<?php echo htmlspecialchars(BASE_URL); ?>">
     <?php if ($admin_is_logged): ?>
     <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom shadow-sm fixed-top py-3">
         <div class="container">
@@ -65,5 +65,7 @@ $admin_site_name_navbar = getContent($navbarContent, 'brand', 'OAXACA TEXTILES')
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="<?php echo ASSETS_URL; ?>/js/admin.js"></script>
+    <script src="<?php echo ASSETS_URL; ?>/js/admin-products.js"></script>
+    <script src="<?php echo ASSETS_URL; ?>/js/admin-form.js"></script>
 </body>
 </html>
