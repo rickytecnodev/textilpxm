@@ -208,7 +208,12 @@ class HomeController extends Controller {
             return;
         }
 
-        $this->render('login', ['page_title' => 'Iniciar Sesión']);
+        $flash = $this->getFlashMessage();
+        $this->render('login', [
+            'page_title' => 'Iniciar Sesión',
+            'flash_message' => $flash['message'] ?? null,
+            'flash_type' => $flash['type'] ?? 'info',
+        ]);
     }
 
     /**
@@ -254,7 +259,12 @@ class HomeController extends Controller {
             }
         }
 
-        $this->render('register', ['page_title' => 'Crear Cuenta']);
+        $flash = $this->getFlashMessage();
+        $this->render('register', [
+            'page_title' => 'Crear Cuenta',
+            'flash_message' => $flash['message'] ?? null,
+            'flash_type' => $flash['type'] ?? 'info',
+        ]);
     }
 
     /**

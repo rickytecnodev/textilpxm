@@ -58,9 +58,15 @@ class AdminController extends Controller {
         if ($imagenUrl === '' || strpos($imagenUrl, 'productos/') !== 0) {
             return;
         }
+        // Evitar path traversal (.., barras invertidas, etc.)
+        if (preg_match('/\.\.|[\\\\]/', $imagenUrl)) {
+            return;
+        }
         $path = PUBLIC_PATH . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $imagenUrl);
-        if (is_file($path)) {
-            @unlink($path);
+        $realPath = realpath($path);
+        $basePath = realpath(PUBLIC_PATH . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'productos');
+        if ($realPath !== false && $basePath !== false && strpos($realPath, $basePath) === 0 && is_file($realPath)) {
+            @unlink($realPath);
         }
     }
 
@@ -96,40 +102,55 @@ class AdminController extends Controller {
             exit;
         }
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $email = trim($_POST['email'] ?? '');
-            $password = $_POST['password'] ?? '';
-
-            if ($email === '' || $password === '') {
-                $_SESSION['flash_email'] = $email;
-                $this->redirectWithMessage('/admin', 'Completa email y contraseña.', 'danger');
-                return;
-            }
-
-            $user = $this->userModel->login($email, $password);
-            if (!$user) {
-                $_SESSION['flash_email'] = $email;
-                $this->redirectWithMessage('/admin', 'Credenciales incorrectas.', 'danger');
-                return;
-            }
-            if (($user['rol'] ?? '') !== 'admin') {
-                $_SESSION['flash_email'] = $email;
-                $this->redirectWithMessage('/admin', 'Acceso denegado. Solo administradores.', 'danger');
-                return;
-            }
-
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_name'] = $user['nombre'];
-            $_SESSION['user_email'] = $user['email'];
-            $_SESSION['user_rol'] = $user['rol'];
-
-            $path = $_SESSION['admin_redirect'] ?? '/admin';
-            unset($_SESSION['admin_redirect']);
-            header('Location: ' . BASE_URL . $path);
-            exit;
+        if (!csrf_verify()) {
+            $_SESSION['flash_email'] = trim($_POST['email'] ?? '');
+            $this->redirectWithMessage('/admin', 'Sesión inválida. Intenta de nuevo.', 'danger');
+            return;
         }
 
-        $this->render('admin/login', ['page_title' => 'Admin Login'], 'admin');
+        $email = trim($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
+
+        if ($email === '' || $password === '') {
+            $_SESSION['flash_email'] = $email;
+            $this->redirectWithMessage('/admin', 'Completa email y contraseña.', 'danger');
+            return;
+        }
+
+        $user = $this->userModel->login($email, $password);
+        if (!$user) {
+            $_SESSION['flash_email'] = $email;
+            $this->redirectWithMessage('/admin', 'Credenciales incorrectas.', 'danger');
+            return;
+        }
+        if (($user['rol'] ?? '') !== 'admin') {
+            $_SESSION['flash_email'] = $email;
+            $this->redirectWithMessage('/admin', 'Acceso denegado. Solo administradores.', 'danger');
+            return;
+        }
+
+        session_regenerate_id(true);
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['user_name'] = $user['nombre'];
+        $_SESSION['user_email'] = $user['email'];
+        $_SESSION['user_rol'] = $user['rol'];
+
+        $path = $_SESSION['admin_redirect'] ?? '/admin';
+        unset($_SESSION['admin_redirect']);
+        header('Location: ' . BASE_URL . $path);
+        exit;
+    }
+
+    /**
+     * Mostrar formulario de login (GET /admin cuando no está autenticado)
+     */
+    private function showLoginForm($error = null, $email = '') {
+        $this->render('admin/login', [
+            'page_title' => 'Admin Login',
+            'error' => $error,
+            'email' => $email,
+            'csrf_token' => csrf_token(),
+        ], 'admin');
     }
 
     /**
@@ -156,7 +177,7 @@ class AdminController extends Controller {
                 if (isset($_SESSION['flash_email'])) {
                     unset($_SESSION['flash_email']);
                 }
-                $this->render('admin/login', ['page_title' => 'Admin Login', 'error' => $error, 'email' => $email], 'admin');
+                $this->showLoginForm($error, $email);
                 return;
             }
             header('Location: ' . BASE_URL . '/admin');
@@ -174,20 +195,12 @@ class AdminController extends Controller {
     }
 
     /**
-     * Página para ordenar productos (lista con subir/bajar)
+     * Página para ordenar productos: redirige al listado (el orden se cambia con subir/bajar en la tabla).
      * GET /admin/ordenarProductos
      */
     public function ordenarProductos() {
         $this->requireAdmin();
-        $products = $this->productModel->getAll();
-        $flash = $this->getFlashMessage();
-        $data = [
-            'page_title' => 'Ordenar productos',
-            'products' => $products ?: [],
-            'flash_message' => $flash['message'] ?? null,
-            'flash_type' => $flash['type'] ?? null,
-        ];
-        $this->render('admin/ordenar-productos/index', $data, 'admin');
+        $this->redirect(BASE_URL . '/admin');
     }
 
     /**
@@ -202,9 +215,9 @@ class AdminController extends Controller {
             return;
         }
         if ($this->productModel->subirOrden($id)) {
-            $this->redirectWithMessage('/admin/ordenarProductos', 'Orden actualizado', 'success');
+            $this->redirectWithMessage('/admin', 'Orden actualizado', 'success');
         } else {
-            $this->redirectWithMessage('/admin/ordenarProductos', 'No se pudo subir (quizá ya es el primero)', 'warning');
+            $this->redirectWithMessage('/admin', 'No se pudo subir (quizá ya es el primero)', 'warning');
         }
     }
 
@@ -220,9 +233,9 @@ class AdminController extends Controller {
             return;
         }
         if ($this->productModel->bajarOrden($id)) {
-            $this->redirectWithMessage('/admin/ordenarProductos', 'Orden actualizado', 'success');
+            $this->redirectWithMessage('/admin', 'Orden actualizado', 'success');
         } else {
-            $this->redirectWithMessage('/admin/ordenarProductos', 'No se pudo bajar (quizá ya es el último)', 'warning');
+            $this->redirectWithMessage('/admin', 'No se pudo bajar (quizá ya es el último)', 'warning');
         }
     }
 
@@ -258,6 +271,7 @@ class AdminController extends Controller {
             'categories' => $categories ?: [],
             'flash_message' => $flash['message'] ?? null,
             'flash_type' => $flash['type'] ?? null,
+            'csrf_token' => csrf_token(),
         ];
         $this->render('admin/products/form', $data, 'admin');
     }
@@ -269,6 +283,10 @@ class AdminController extends Controller {
         $this->requireAdmin();
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect(BASE_URL . '/admin');
+            return;
+        }
+        if (!csrf_verify()) {
+            $this->redirectWithMessage('/admin/crear', 'Sesión inválida. Intenta de nuevo.', 'danger');
             return;
         }
 
@@ -336,6 +354,7 @@ class AdminController extends Controller {
             'categories' => $categories ?: [],
             'flash_message' => $flash['message'] ?? null,
             'flash_type' => $flash['type'] ?? null,
+            'csrf_token' => csrf_token(),
         ];
         $this->render('admin/products/form', $data, 'admin');
     }
@@ -347,6 +366,10 @@ class AdminController extends Controller {
         $this->requireAdmin();
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect(BASE_URL . '/admin');
+            return;
+        }
+        if (!csrf_verify()) {
+            $this->redirectWithMessage('/admin/editar/' . (int)$id, 'Sesión inválida. Intenta de nuevo.', 'danger');
             return;
         }
         $id = (int) $id;
@@ -412,6 +435,10 @@ class AdminController extends Controller {
         $this->requireAdmin();
 
         if ($action === 'guardar' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!csrf_verify()) {
+                $this->redirectWithMessage('/admin/contenido', 'Sesión inválida. Intenta de nuevo.', 'danger');
+                return;
+            }
             $uploadDir = PUBLIC_PATH . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'site';
             if (!is_dir($uploadDir)) {
                 @mkdir($uploadDir, 0755, true);
@@ -492,6 +519,7 @@ class AdminController extends Controller {
             'whatsapp_number' => SiteContent::whatsappUrlToNumber($whatsappUrl),
             'flash_message' => $flash['message'] ?? null,
             'flash_type' => $flash['type'] ?? null,
+            'csrf_token' => csrf_token(),
         ];
         $this->render('admin/contenido', $data, 'admin');
     }

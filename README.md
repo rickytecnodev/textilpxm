@@ -23,45 +23,33 @@ Sitio Web Dinámico desarrollado con PHP, Bootstrap y Arquitectura MVC
 ```
 textilpxm/
 ├── app/
-│   ├── controllers/      # Controladores de la aplicación
-│   │   ├── Controller.php         # Controlador base
-│   │   ├── HomeController.php     # Controlador principal
-│   │   ├── CatalogController.php  # Controlador del catálogo público
-│   │   └── ProductController.php  # Controlador CRUD de productos
-│   ├── models/           # Modelos de datos
-│   │   ├── Model.php              # Modelo base
-│   │   ├── User.php               # Modelo de usuario
-│   │   └── Product.php            # Modelo de productos
-│   ├── views/            # Vistas de la aplicación
-│   │   ├── View.php               # Clase de vista
-│   │   ├── layouts/
-│   │   │   └── main.php           # Layout principal
-│   │   ├── catalog/               # Vistas del catálogo público
-│   │   │   ├── index.php          # Lista de productos
-│   │   │   └── show.php          # Detalle de producto
-│   │   ├── products/              # Vistas del panel de administración
-│   │   │   ├── index.php          # Lista de productos (CRUD)
-│   │   │   └── form.php           # Formulario crear/editar
-│   │   ├── home/
-│   │   │   └── index.php          # Vista home
-│   │   ├── about.php              # Vista sobre nosotros
-│   │   ├── contact.php            # Vista contacto
-│   │   ├── login.php              # Vista login
-│   │   └── register.php          # Vista registro
-│   └── router.php                 # Sistema de enrutamiento
+│   ├── controllers/        # Controladores
+│   │   ├── Controller.php   # Controlador base
+│   │   ├── HomeController.php
+│   │   └── AdminController.php  # Panel admin (productos, contenido, login)
+│   ├── models/
+│   │   ├── Model.php
+│   │   ├── User.php
+│   │   ├── Product.php
+│   │   └── SiteContent.php
+│   ├── views/
+│   │   ├── View.php
+│   │   ├── layouts/ (main.php, admin.php)
+│   │   ├── home/, categorias/, ordenar/, producto/
+│   │   ├── admin/ (login, products, contenido)
+│   │   ├── login.php, register.php, contact.php, about.php
+│   │   └── ...
+│   ├── helpers.php
+│   ├── content_data.php    # Fallback de contenido (si BD vacía)
+│   └── router.php
 ├── config/
-│   ├── Config.php       # Configuración principal
-│   └── Database.php     # Clase de conexión a base de datos
+│   └── Config.php          # Configuración y constantes (BD, rutas)
 ├── database/
-│   └── schema.sql       # Script SQL con estructura de BD
+│   └── schema.sql
 ├── public/
-│   ├── css/
-│   │   └── style.css    # Estilos personalizados
-│   ├── js/
-│   │   └── main.js      # JavaScript
-│   ├── img/             # Imágenes del proyecto
-│   ├── index.php        # Punto de entrada
-│   └── .htaccess        # Configuración de URLs amigables
+│   ├── css/, js/, images/
+│   ├── index.php           # Punto de entrada
+│   └── .htaccess
 └── README.md
 ```
 
@@ -116,8 +104,9 @@ cd textilpxm
    El proyecto detecta automáticamente la ruta base, por lo que funcionará en cualquier ubicación sin configuración adicional.
 
 5. Ajustar las configuraciones (opcional):
-   - Abre `config/Config.php` si necesitas cambiar la configuración de la base de datos
-   - Las URLs se detectan automáticamente, no es necesario modificar `BASE_URL`
+   - `config/Config.php`: host, nombre y usuario de la base de datos (DB_HOST, DB_NAME, DB_USER, DB_PASS)
+   - En producción, define `APP_ENV=production` (o en el servidor) para no mostrar errores PHP
+   - Las URLs se detectan automáticamente
 
 6. Permisos:
    - Asegúrate de que PHP tenga permisos de escritura en las carpetas necesarias
@@ -146,18 +135,19 @@ Asegúrate de que el DocumentRoot de tu servidor web apunte al directorio `publi
 Una vez que Apache esté corriendo, accede a:
 
 **Páginas Públicas:**
-- Catálogo: `http://localhost/textilpxm/public/catalog` (página principal)
-- Detalle de producto: `http://localhost/textilpxm/public/catalog/show/{id}`
-- Nosotros: `http://localhost/textilpxm/public/about`
-- Contacto: `http://localhost/textilpxm/public/contact`
+- Inicio: `http://localhost/textilpxm/public/` (o sin `/public/` si usas el .htaccess raíz)
+- Categorías: `/categorias` (con búsqueda `?q=`)
+- Producto: `/producto/{id}`
+- Ordenar: `/ordenar` (formulario de pedido)
+- Contacto: `/contact` — Nosotros: `/about`
+- Login/Registro (usuarios): `/login`, `/register`
 
-**Panel de Administración (requiere login):**
-- Login: `http://localhost/textilpxm/public/login`
-- Gestión de Productos: `http://localhost/textilpxm/public/products`
-- Crear Producto: `http://localhost/textilpxm/public/products/create`
-- Editar Producto: `http://localhost/textilpxm/public/products/edit/{id}`
+**Panel de Administración (solo rol admin):**
+- Login admin: `http://localhost/textilpxm/public/admin` o `/admin/login`
+- Productos: `/admin` (listado, orden, crear, editar, eliminar)
+- Contenido del sitio: `/admin/contenido`
 
-**Credenciales por defecto:**
+**Credenciales admin por defecto:**
 - Email: `admin@textilpxm.com`
 - Contraseña: `admin123`
 
@@ -173,26 +163,23 @@ Si las URLs no funcionan, verifica que:
 2. El archivo `.htaccess` esté en la carpeta `public/`
 3. `AllowOverride` esté configurado en `All` en tu configuración de Apache
 
-### Gestión de Productos
+### Gestión de Productos (Admin)
 
-Una vez que hayas iniciado sesión, podrás:
+En `/admin` (tras iniciar sesión como admin):
 
-1. **Ver todos los productos:** Accede a `/products` para ver la lista completa
-2. **Crear nuevo producto:** Haz clic en "Nuevo Producto" y completa el formulario
-3. **Editar producto:** Haz clic en el ícono de editar en la lista de productos
-4. **Eliminar producto:** Haz clic en el ícono de eliminar (soft delete - el producto se desactiva)
-5. **Controlar stock:** Actualiza el stock disponible para cada producto
-6. **Activar/Desactivar:** Los productos inactivos no aparecen en el catálogo público
+1. **Listado:** Ver todos los productos con filtros y orden
+2. **Orden:** Subir/bajar orden con los botones en la tabla
+3. **Nuevo producto:** `/admin/crear`
+4. **Editar / Eliminar:** Desde el listado (eliminar es borrado permanente)
+5. **Portada:** Marcar productos para la sección de portada en inicio
+6. **Contenido del sitio:** Navbar, footer, meta, textos del home en `/admin/contenido`
 
 ### Catálogo Público
 
-El catálogo público (`/catalog`) muestra todos los productos activos con:
-- Imágenes de productos
-- Precios en MXN
-- Estado de stock (disponible, pocas unidades, agotado)
-- Categorías
-- Descripciones detalladas
-- Diseño adaptado del HTML original
+- **Inicio:** Productos en portada y enlace a categorías
+- **Categorías:** `/categorias` con pestañas por categoría y búsqueda
+- **Detalle:** `/producto/{id}` con productos relacionados
+- **Ordenar:** Formulario de pedido en `/ordenar`
 
 ## Descripción de Componentes
 
@@ -247,10 +234,13 @@ El diseño usa Bootstrap 5 a través de CDN para:
 
 ## Seguridad
 
-- Contraseñas hasheadas con `password_hash`
-- Prepared statements para todas las consultas (prevenir SQL injection)
-- Protección contra acceso a archivos sensibles vía .htaccess
-- Cabeceras de seguridad configuradas
+- Contraseñas hasheadas con `password_hash` (PHP)
+- Prepared statements en todos los modelos (SQL injection)
+- Tokens CSRF en formularios de admin (login, productos, contenido)
+- Regeneración de sesión al iniciar sesión admin
+- Validación de tipo MIME en subida de imágenes; path traversal evitado al borrar imágenes
+- Errores PHP ocultos en producción (`APP_ENV=production` por defecto)
+- .htaccess: bloqueo de acceso a `config/`, `.env`, `.git`; cabeceras X-Content-Type-Options, X-Frame-Options, X-XSS-Protection
 
 ## Desarrollo
 
@@ -265,7 +255,7 @@ composer install
 
 ### Depuración
 
-La configuración muestra errores PHP por defecto. En producción, desactivar esto en `config/Config.php`.
+Para ver errores PHP en desarrollo, define la variable de entorno `APP_ENV=development` (o en tu servidor/virtualhost). Por defecto el entorno se considera producción y no se muestran errores en pantalla.
 
 ## Contribución
 

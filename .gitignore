@@ -4,6 +4,8 @@ public/.htaccess.backup
 # Archivos de configuración con contraseñas
 config/Config.local.php
 config/.env
+.env
+.env.local
 
 # Carpetas generadas
 vendor/

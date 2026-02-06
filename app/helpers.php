@@ -5,6 +5,27 @@
  */
 
 /**
+ * Generar y guardar token CSRF en sesión. Debe llamarse al mostrar formularios.
+ * @return string Token para usar en campo oculto
+ */
+function csrf_token() {
+    if (empty($_SESSION['_csrf_token'])) {
+        $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['_csrf_token'];
+}
+
+/**
+ * Comprobar token CSRF (en controladores, en POST).
+ * @param string|null $token Valor del campo _csrf (por defecto $_POST['_csrf'])
+ * @return bool
+ */
+function csrf_verify($token = null) {
+    $token = $token ?? ($_POST['_csrf'] ?? '');
+    return $token !== '' && isset($_SESSION['_csrf_token']) && hash_equals($_SESSION['_csrf_token'], $token);
+}
+
+/**
  * Cargar contenido: primero desde BD (site_content), luego fallback a content_data.php
  * @param string $filename Clave del contenido: navbar, footer, meta, home
  * @return array|false Array con los datos o false si no existe

@@ -23,6 +23,9 @@ $tallas_array = array_filter(array_map('trim', explode(',', $tallas_disponibles)
     <div class="card-body p-4">
     <h1 class="h4 fw-bold mb-3 text-center"><?php echo $isEdit ? 'Editar producto' : 'Nuevo producto'; ?></h1>
     <form method="post" action="<?php echo $formAction; ?>" id="form-producto" enctype="multipart/form-data">
+        <?php if (!empty($csrf_token)): ?>
+        <input type="hidden" name="_csrf" value="<?php echo htmlspecialchars($csrf_token); ?>">
+        <?php endif; ?>
         <div class="mb-3">
             <label for="nombre" class="form-label">Nombre <span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="nombre" name="nombre" required

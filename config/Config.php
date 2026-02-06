@@ -63,9 +63,11 @@ define('SITE_EMAIL', 'info@textilpxm.com');
 define('SESSION_NAME', 'TEXTILPXM_SESSION');
 define('SESSION_LIFETIME', 86400); // 24 horas
 
-// Configuración de errores (descomentar en desarrollo)
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+// Configuración de errores: solo mostrar en desarrollo
+$isDev = (getenv('APP_ENV') ?: 'production') === 'development';
+ini_set('display_errors', $isDev ? '1' : '0');
+ini_set('display_startup_errors', $isDev ? '1' : '0');
+ini_set('log_errors', '1');
 error_reporting(E_ALL);
 
 // Zona horaria

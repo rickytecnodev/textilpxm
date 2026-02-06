@@ -18,6 +18,9 @@ $v = function($key) use ($c) { return htmlspecialchars($c[$key] ?? '', ENT_QUOTE
 
     <div class="card-body p-4">
         <form method="post" action="<?php echo BASE_URL; ?>/admin/contenido/guardar" enctype="multipart/form-data">
+            <?php if (!empty($csrf_token)): ?>
+            <input type="hidden" name="_csrf" value="<?php echo htmlspecialchars($csrf_token); ?>">
+            <?php endif; ?>
             <ul class="nav nav-tabs mb-3" id="contenidoTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="tab-3-btn" data-bs-toggle="tab" data-bs-target="#tab-3" type="button" role="tab" aria-selected="true">Título y descripción del sitio (pestaña y buscadores)</button>

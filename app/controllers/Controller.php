@@ -6,7 +6,6 @@
 
 class Controller {
     protected $view;
-    protected $model;
     protected $data = [];
 
     /**

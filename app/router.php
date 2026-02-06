@@ -29,9 +29,17 @@ class Router {
             'ordenar' => 'ordenar',
             'login' => 'login',
             'register' => 'register',
-            'logout' => 'logout'
+            'logout' => 'logout',
+            'contact' => 'contact',
+            'about' => 'about',
         ];
         
+        // Redirigir /products al panel de administración (gestión real está en /admin)
+        if (!empty($urlParts[0]) && $urlParts[0] === 'products') {
+            header('Location: ' . BASE_URL . '/admin');
+            exit;
+        }
+
         // Panel de administración: /admin, /admin/login, /admin/productos, etc.
         if (!empty($urlParts[0]) && $urlParts[0] === 'admin') {
             $this->controllerName = 'AdminController';

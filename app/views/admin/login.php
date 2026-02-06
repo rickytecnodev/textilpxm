@@ -12,6 +12,9 @@
             <?php endif; ?>
 
             <form method="post" action="<?php echo BASE_URL; ?>/admin/login">
+                <?php if (!empty($csrf_token)): ?>
+                <input type="hidden" name="_csrf" value="<?php echo htmlspecialchars($csrf_token); ?>">
+                <?php endif; ?>
                 <div class="mb-3">
                     <label for="email" class="form-label">Correo electrónico</label>
                     <input type="email" class="form-control" id="email" name="email" required
