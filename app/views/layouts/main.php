@@ -59,10 +59,10 @@ $metaContent = loadContent('meta');
                         <a class="nav-link text-dark small" href="<?php echo BASE_URL; ?>#nosotros">Nosotros</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark small" href="<?php echo BASE_URL; ?>/ordenar">Ordenar</a>
+                        <a class="nav-link text-dark small" href="<?php echo BASE_URL; ?>#contacto">Contacto</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark small" href="<?php echo BASE_URL; ?>#contacto">Contacto</a>
+                        <a class="nav-link text-dark small" href="<?php echo BASE_URL; ?>/ordenar">Ordenar</a>
                     </li>
                 </ul>
                 <form class="d-flex me-3 mb-2 mb-lg-0" role="search" action="<?php echo BASE_URL; ?>/categorias" method="GET" onsubmit="var q = this.q.value.trim(); if (!q) { this.q.value = ''; return false; } this.q.value = q;">
