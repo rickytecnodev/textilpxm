@@ -7,7 +7,7 @@ function confirmarEliminar(url, accion) {
     switch (accion) {
         case 'eliminar':
             titulo = '¿Eliminar producto?';
-            texto = 'El producto se marcará como inactivo.';
+            texto = 'Si eliminas este producto no podras recuperarlo. Mejor recomendamos que lo desactives desde el modulo de edicion.';
             icono = 'warning';
             break;
         default:
@@ -15,18 +15,27 @@ function confirmarEliminar(url, accion) {
             texto = '';
             icono = 'question';
     }
-    Swal.fire({
+    var editUrl = (accion === 'eliminar' && url) ? url.replace(/\/eliminar\//, '/editar/') : null;
+    var opts = {
         title: titulo,
         text: texto,
         icon: icono,
         showCancelButton: true,
-        confirmButtonColor: '#0d6efd',
+        confirmButtonColor: '#dc3545',
         cancelButtonColor: '#6c757d',
         confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar'
-    }).then(function(result) {
+    };
+    if (editUrl) {
+        opts.showDenyButton = true;
+        opts.denyButtonText = 'Ir a editar';
+        opts.denyButtonColor = '#0d6efd';
+    }
+    Swal.fire(opts).then(function(result) {
         if (result.isConfirmed) {
             window.location.href = url;
+        } else if (result.isDenied && editUrl) {
+            window.location.href = editUrl;
         }
     });
     return false;

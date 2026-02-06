@@ -42,7 +42,13 @@ $metaContent = loadContent('meta');
                 <i class="bi bi-list fs-4 text-dark"></i>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
+                
                 <ul class="navbar-nav mx-auto">
+                    <?php if (!empty($_SESSION['user_id']) && ($_SESSION['user_rol'] ?? '') === 'admin'): ?>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark small" href="<?php echo BASE_URL; ?>/admin"><i class="bi bi-gear me-1"></i>Admin</a>
+                        </li>
+                    <?php endif; ?>
                     <li class="nav-item">
                         <a class="nav-link text-dark small" href="<?php echo BASE_URL; ?>#inicio">Inicio</a>
                     </li>
@@ -65,9 +71,6 @@ $metaContent = loadContent('meta');
                         <i class="bi bi-search"></i>
                     </button>
                 </form>
-                <?php if (!empty($_SESSION['user_id']) && ($_SESSION['user_rol'] ?? '') === 'admin'): ?>
-                    <a href="<?php echo BASE_URL; ?>/admin" class="btn btn-outline-secondary btn-sm"><i class="bi bi-gear me-1"></i>Admin</a>
-                <?php endif; ?>
             </div>
         </div>
     </nav>

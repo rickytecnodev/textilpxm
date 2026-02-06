@@ -22,6 +22,9 @@ if (!empty($products)) {
     </a>
 </div>
 
+<style>
+    a.swap-up.disabled, a.swap-down.disabled { pointer-events: none; opacity: 0.5; cursor: not-allowed; }
+</style>
 <div class="card shadow-sm mb-4">
     <?php if (empty($products)): ?>
         <div class="card-body text-center py-5 text-muted">
@@ -34,21 +37,23 @@ if (!empty($products)) {
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
+                        <th>Orden</th>
                         <th>Producto</th>
                         <th>Categoría</th>
                         <th>Precio</th>
                         <th>Stock</th>
                         <th>Portada</th>
                         <th>Estado</th>
-                        <th class="text-end"></th>
+                        <th class="text-end">Acciones</th>
                     </tr>
                     <tr class="table-secondary align-middle">
+                        <th class="p-1"></th>
                         <th class="p-1">
                             <input type="text" class="form-control form-control-sm" id="filter-nombre" placeholder="Nombre...">
                         </th>
                         <th class="p-1">
                             <select class="form-select form-select-sm" id="filter-categoria">
-                                <option value="">Todas</option>
+                                <option value="">-</option>
                                 <optgroup label="Orden">
                                     <option value="__sort_asc__">A → Z</option>
                                     <option value="__sort_desc__">Z → A</option>
@@ -78,14 +83,14 @@ if (!empty($products)) {
                         </th>
                         <th class="p-1">
                             <select class="form-select form-select-sm" id="filter-portada">
-                                <option value="">Todos</option>
+                                <option value="">-</option>
                                 <option value="1">Sí</option>
                                 <option value="0">No</option>
                             </select>
                         </th>
                         <th class="p-1">
                             <select class="form-select form-select-sm" id="filter-estado">
-                                <option value="">Todos</option>
+                                <option value="">-</option>
                                 <option value="1">Activo</option>
                                 <option value="0">Inactivo</option>
                             </select>
@@ -99,7 +104,11 @@ if (!empty($products)) {
                 </thead>
                 <tbody id="products-tbody">
                     <?php foreach ($products as $p): ?>
-                        <tr data-nombre="<?php echo htmlspecialchars($p['nombre'], ENT_QUOTES, 'UTF-8'); ?>" data-categoria="<?php echo htmlspecialchars($p['categoria'], ENT_QUOTES, 'UTF-8'); ?>" data-precio="<?php echo (float)$p['precio']; ?>" data-stock="<?php echo (int)($p['stock'] ?? 0); ?>" data-portada="<?php echo !empty($p['portada']) ? '1' : '0'; ?>" data-activo="<?php echo !empty($p['activo']) ? '1' : '0'; ?>">
+                        <tr data-id="<?php echo (int)$p['id']; ?>" data-nombre="<?php echo htmlspecialchars($p['nombre'], ENT_QUOTES, 'UTF-8'); ?>" data-categoria="<?php echo htmlspecialchars($p['categoria'], ENT_QUOTES, 'UTF-8'); ?>" data-precio="<?php echo (float)$p['precio']; ?>" data-stock="<?php echo (int)($p['stock'] ?? 0); ?>" data-portada="<?php echo !empty($p['portada']) ? '1' : '0'; ?>" data-activo="<?php echo !empty($p['activo']) ? '1' : '0'; ?>">
+                            <td>
+                                <a href="#" class="swap-up btn btn-sm btn-outline-secondary me-1" title="Subir en el orden"><i class="bi bi-chevron-up"></i></a>
+                                <a href="#" class="swap-down btn btn-sm btn-outline-secondary" title="Bajar en el orden"><i class="bi bi-chevron-down"></i></a>
+                            </td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
                                     <img src="<?php echo htmlspecialchars(productImageUrl($p['imagen_url'] ?? '')); ?>" alt="" class="rounded object-fit-cover" width="48" height="48" loading="lazy">
@@ -109,7 +118,7 @@ if (!empty($products)) {
                                 </div>
                             </td>
                             <td><span class="text-muted small"><?php echo htmlspecialchars($p['categoria']); ?></span></td>
-                            <td><?php echo number_format((float)$p['precio'], 2); ?></td>
+                            <td>$<?php echo number_format((float)$p['precio'], 2); ?></td>
                             <td><?php echo (int)($p['stock'] ?? 0); ?></td>
                             <td>
                                 <?php if (!empty($p['portada'])): ?>
@@ -126,8 +135,8 @@ if (!empty($products)) {
                                 <?php endif; ?>
                             </td>
                             <td class="text-end text-nowrap">
-                                <a href="<?php echo BASE_URL; ?>/admin/editar/<?php echo (int)$p['id']; ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil-square me-1"></i>Editar</a>
-                                <a href="<?php echo BASE_URL; ?>/admin/eliminar/<?php echo (int)$p['id']; ?>" class="btn btn-sm btn-outline-danger" onclick="return confirmarEliminar(this.href, 'eliminar');"><i class="bi bi-trash me-1"></i>Eliminar</a>
+                                <a href="<?php echo BASE_URL; ?>/admin/editar/<?php echo (int)$p['id']; ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil-square me-1"></i></a>
+                                <a href="<?php echo BASE_URL; ?>/admin/eliminar/<?php echo (int)$p['id']; ?>" class="btn btn-sm btn-outline-danger" onclick="return confirmarEliminar(this.href, 'eliminar');"><i class="bi bi-trash me-1"></i></a>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -140,6 +149,7 @@ if (!empty($products)) {
 <?php if (!empty($products)): ?>
 <script>
 (function() {
+    var BASE_URL = <?php echo json_encode(BASE_URL); ?>;
     var tbody = document.getElementById('products-tbody');
     var filterInput = document.getElementById('filter-products');
     var sortSelect = document.getElementById('sort-products');
@@ -220,6 +230,52 @@ if (!empty($products)) {
     function refresh() {
         applyAllFilters();
         applySort();
+        updateSwapButtonsState();
+    }
+
+    function tieneAlgunFiltro() {
+        if (filterNombre && filterNombre.value.trim() !== '') return true;
+        if (filterCategoria && filterCategoria.value !== '') return true;
+        if (filterPrecio && filterPrecio.value !== '') return true;
+        if (filterStock && filterStock.value !== '') return true;
+        if (filterPortada && filterPortada.value !== '') return true;
+        if (filterEstado && filterEstado.value !== '') return true;
+        return false;
+    }
+
+    function updateSwapButtonsState() {
+        var conFiltro = tieneAlgunFiltro();
+        var rows = getRows();
+        var primero = rows[0];
+        var ultimo = rows[rows.length - 1];
+        rows.forEach(function(tr) {
+            var upBtn = tr.querySelector('a.swap-up');
+            var downBtn = tr.querySelector('a.swap-down');
+            var deshabilitarUp = conFiltro || tr === primero;
+            var deshabilitarDown = conFiltro || tr === ultimo;
+            if (upBtn) {
+                if (deshabilitarUp) {
+                    upBtn.classList.add('disabled');
+                    upBtn.setAttribute('aria-disabled', 'true');
+                    upBtn.title = conFiltro ? 'Quita los filtros para cambiar el orden' : 'Es el primero';
+                } else {
+                    upBtn.classList.remove('disabled');
+                    upBtn.removeAttribute('aria-disabled');
+                    upBtn.title = 'Subir en el orden';
+                }
+            }
+            if (downBtn) {
+                if (deshabilitarDown) {
+                    downBtn.classList.add('disabled');
+                    downBtn.setAttribute('aria-disabled', 'true');
+                    downBtn.title = conFiltro ? 'Quita los filtros para cambiar el orden' : 'Es el último';
+                } else {
+                    downBtn.classList.remove('disabled');
+                    downBtn.removeAttribute('aria-disabled');
+                    downBtn.title = 'Bajar en el orden';
+                }
+            }
+        });
     }
 
     function tieneOrdenCategoria() {
@@ -283,6 +339,22 @@ if (!empty($products)) {
     if (filterStock) filterStock.addEventListener('change', onChangeStock);
     if (filterPortada) filterPortada.addEventListener('change', refresh);
     if (filterEstado) filterEstado.addEventListener('change', refresh);
+
+    updateSwapButtonsState();
+
+    function prevRow(tr) { return tr.previousElementSibling; }
+    function nextRow(tr) { return tr.nextElementSibling; }
+    tbody.addEventListener('click', function(e) {
+        var link = e.target.closest('a.swap-up, a.swap-down');
+        if (!link || link.classList.contains('disabled')) return;
+        e.preventDefault();
+        var tr = link.closest('tr');
+        var otherTr = link.classList.contains('swap-up') ? prevRow(tr) : nextRow(tr);
+        if (!otherTr) return;
+        var id1 = tr.getAttribute('data-id');
+        var id2 = otherTr.getAttribute('data-id');
+        if (id1 && id2) window.location.href = BASE_URL + '/admin/ordenarProductosSwap/' + id1 + '/' + id2;
+    });
 })();
 </script>
 <?php endif; ?>

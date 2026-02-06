@@ -8,14 +8,21 @@ class Product extends Model {
     private $table = 'products';
 
     /**
+     * Orden por defecto: mayor a menor (ID/orden más alto primero) para que los más recientes aparezcan primero
+     */
+    private function orderByOrden() {
+        return " ORDER BY COALESCE(orden, id) DESC, id DESC";
+    }
+
+    /**
      * Obtener todos los productos
      */
     public function getAll($activo = null) {
         if ($activo !== null) {
-            $sql = "SELECT * FROM " . $this->table . " WHERE activo = ? ORDER BY created_at DESC";
+            $sql = "SELECT * FROM " . $this->table . " WHERE activo = ?" . $this->orderByOrden();
             return $this->fetchAll($sql, [$activo]);
         }
-        $sql = "SELECT * FROM " . $this->table . " ORDER BY created_at DESC";
+        $sql = "SELECT * FROM " . $this->table . $this->orderByOrden();
         return $this->fetchAll($sql);
     }
 
@@ -23,7 +30,7 @@ class Product extends Model {
      * Obtener productos activos (para catálogo público)
      */
     public function getActive() {
-        $sql = "SELECT * FROM " . $this->table . " WHERE activo = 1 ORDER BY categoria, nombre";
+        $sql = "SELECT * FROM " . $this->table . " WHERE activo = 1" . $this->orderByOrden();
         return $this->fetchAll($sql);
     }
 
@@ -31,7 +38,7 @@ class Product extends Model {
      * Obtener productos de portada (para home)
      */
     public function getPortada() {
-        $sql = "SELECT * FROM " . $this->table . " WHERE activo = 1 AND portada = 1 ORDER BY categoria, nombre";
+        $sql = "SELECT * FROM " . $this->table . " WHERE activo = 1 AND portada = 1" . $this->orderByOrden();
         return $this->fetchAll($sql);
     }
 
@@ -47,7 +54,7 @@ class Product extends Model {
      * Obtener productos por categoría
      */
     public function getByCategory($categoria, $activo = 1) {
-        $sql = "SELECT * FROM " . $this->table . " WHERE categoria = ? AND activo = ? ORDER BY nombre";
+        $sql = "SELECT * FROM " . $this->table . " WHERE categoria = ? AND activo = ?" . $this->orderByOrden();
         return $this->fetchAll($sql, [$categoria, $activo]);
     }
 
@@ -135,7 +142,11 @@ class Product extends Model {
             $data['tallas_disponibles'] ?? ''
         ]);
 
-        return $this->lastInsertId();
+        $id = $this->lastInsertId();
+        if ($id) {
+            $this->query("UPDATE " . $this->table . " SET orden = ? WHERE id = ?", [$id, $id]);
+        }
+        return $id;
     }
 
     /**
@@ -224,9 +235,78 @@ class Product extends Model {
         $searchTerm = '%' . trim($searchTerm) . '%';
         $sql = "SELECT * FROM " . $this->table . " 
                 WHERE activo = 1 
-                AND (nombre LIKE ? OR descripcion LIKE ?) 
-                ORDER BY categoria, nombre";
+                AND (nombre LIKE ? OR descripcion LIKE ?)" . $this->orderByOrden();
         
         return $this->fetchAll($sql, [$searchTerm, $searchTerm]);
+    }
+
+    /**
+     * Valor de orden usado para mostrar (COALESCE(orden, id))
+     */
+    public function getOrdenValue($id) {
+        $sql = "SELECT COALESCE(orden, id) AS val FROM " . $this->table . " WHERE id = ?";
+        $row = $this->fetchOne($sql, [$id]);
+        return $row ? (int) $row['val'] : null;
+    }
+
+    /**
+     * ID del producto con orden inmediatamente menor (más abajo en la lista DESC)
+     */
+    public function getPreviousByOrden($id) {
+        $val = $this->getOrdenValue($id);
+        if ($val === null) return null;
+        $sql = "SELECT id FROM " . $this->table . " 
+                WHERE COALESCE(orden, id) < ? 
+                ORDER BY COALESCE(orden, id) DESC 
+                LIMIT 1";
+        $row = $this->fetchOne($sql, [$val]);
+        return $row ? (int) $row['id'] : null;
+    }
+
+    /**
+     * ID del producto con orden inmediatamente mayor (más arriba en la lista DESC)
+     */
+    public function getNextByOrden($id) {
+        $val = $this->getOrdenValue($id);
+        if ($val === null) return null;
+        $sql = "SELECT id FROM " . $this->table . " 
+                WHERE COALESCE(orden, id) > ? 
+                ORDER BY COALESCE(orden, id) ASC 
+                LIMIT 1";
+        $row = $this->fetchOne($sql, [$val]);
+        return $row ? (int) $row['id'] : null;
+    }
+
+    /**
+     * Intercambiar el orden entre dos productos (por id).
+     * Se intercambian los valores de visualización (COALESCE(orden, id)).
+     */
+    public function swapOrden($id1, $id2) {
+        $row1 = $this->fetchOne("SELECT id, orden FROM " . $this->table . " WHERE id = ?", [$id1]);
+        $row2 = $this->fetchOne("SELECT id, orden FROM " . $this->table . " WHERE id = ?", [$id2]);
+        if (!$row1 || !$row2) return false;
+        $display1 = $row1['orden'] !== null ? (int) $row1['orden'] : (int) $row1['id'];
+        $display2 = $row2['orden'] !== null ? (int) $row2['orden'] : (int) $row2['id'];
+        $this->query("UPDATE " . $this->table . " SET orden = ? WHERE id = ?", [$display2, $id1]);
+        $this->query("UPDATE " . $this->table . " SET orden = ? WHERE id = ?", [$display1, $id2]);
+        return true;
+    }
+
+    /**
+     * Mover producto una posición hacia arriba (en lista DESC = intercambiar con el de orden mayor)
+     */
+    public function subirOrden($id) {
+        $nextId = $this->getNextByOrden($id);
+        if ($nextId === null) return false;
+        return $this->swapOrden($id, $nextId);
+    }
+
+    /**
+     * Mover producto una posición hacia abajo (en lista DESC = intercambiar con el de orden menor)
+     */
+    public function bajarOrden($id) {
+        $prevId = $this->getPreviousByOrden($id);
+        if ($prevId === null) return false;
+        return $this->swapOrden($id, $prevId);
     }
 }

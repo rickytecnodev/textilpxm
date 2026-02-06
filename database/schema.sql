@@ -43,11 +43,13 @@ CREATE TABLE products (
     activo TINYINT(1) DEFAULT 1,
     portada TINYINT(1) DEFAULT 0,
     tallas_disponibles VARCHAR(200) DEFAULT '',
+    orden INT DEFAULT NULL COMMENT 'Orden de visualización; por defecto coincide con id',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_categoria (categoria),
     INDEX idx_activo (activo),
-    INDEX idx_portada (portada)
+    INDEX idx_portada (portada),
+    INDEX idx_orden (orden)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Insertar productos de ejemplo (6 categorías con 6 productos cada una)

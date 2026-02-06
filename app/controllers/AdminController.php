@@ -174,6 +174,78 @@ class AdminController extends Controller {
     }
 
     /**
+     * Página para ordenar productos (lista con subir/bajar)
+     * GET /admin/ordenarProductos
+     */
+    public function ordenarProductos() {
+        $this->requireAdmin();
+        $products = $this->productModel->getAll();
+        $flash = $this->getFlashMessage();
+        $data = [
+            'page_title' => 'Ordenar productos',
+            'products' => $products ?: [],
+            'flash_message' => $flash['message'] ?? null,
+            'flash_type' => $flash['type'] ?? null,
+        ];
+        $this->render('admin/ordenar-productos/index', $data, 'admin');
+    }
+
+    /**
+     * Subir producto una posición en el orden
+     * GET /admin/ordenarProductosSubir/{id}
+     */
+    public function ordenarProductosSubir($id) {
+        $this->requireAdmin();
+        $id = (int) $id;
+        if ($id <= 0) {
+            $this->redirectWithMessage('/admin/ordenarProductos', 'ID no válido', 'danger');
+            return;
+        }
+        if ($this->productModel->subirOrden($id)) {
+            $this->redirectWithMessage('/admin/ordenarProductos', 'Orden actualizado', 'success');
+        } else {
+            $this->redirectWithMessage('/admin/ordenarProductos', 'No se pudo subir (quizá ya es el primero)', 'warning');
+        }
+    }
+
+    /**
+     * Bajar producto una posición en el orden
+     * GET /admin/ordenarProductosBajar/{id}
+     */
+    public function ordenarProductosBajar($id) {
+        $this->requireAdmin();
+        $id = (int) $id;
+        if ($id <= 0) {
+            $this->redirectWithMessage('/admin/ordenarProductos', 'ID no válido', 'danger');
+            return;
+        }
+        if ($this->productModel->bajarOrden($id)) {
+            $this->redirectWithMessage('/admin/ordenarProductos', 'Orden actualizado', 'success');
+        } else {
+            $this->redirectWithMessage('/admin/ordenarProductos', 'No se pudo bajar (quizá ya es el último)', 'warning');
+        }
+    }
+
+    /**
+     * Intercambiar orden entre dos productos (por ID). Redirige a /admin.
+     * GET /admin/ordenarProductosSwap/{id1}/{id2}
+     */
+    public function ordenarProductosSwap($id1, $id2) {
+        $this->requireAdmin();
+        $id1 = (int) $id1;
+        $id2 = (int) $id2;
+        if ($id1 <= 0 || $id2 <= 0 || $id1 === $id2) {
+            $this->redirectWithMessage('/admin', 'IDs no válidos', 'danger');
+            return;
+        }
+        if ($this->productModel->swapOrden($id1, $id2)) {
+            $this->redirectWithMessage('/admin', 'Orden actualizado', 'success');
+        } else {
+            $this->redirectWithMessage('/admin', 'No se pudo cambiar el orden', 'warning');
+        }
+    }
+
+    /**
      * Formulario nuevo producto
      */
     public function crear() {
@@ -490,7 +562,7 @@ class AdminController extends Controller {
     }
 
     /**
-     * Eliminar producto (soft delete)
+     * Eliminar producto (borrado físico: se borra de la base de datos y su imagen)
      */
     public function eliminar($id) {
         $this->requireAdmin();
@@ -506,7 +578,7 @@ class AdminController extends Controller {
         }
         $this->deleteProductImageFile($product['imagen_url'] ?? '');
         try {
-            $this->productModel->delete($id);
+            $this->productModel->deletePermanent($id);
             $this->redirectWithMessage('/admin', 'Producto eliminado correctamente', 'success');
         } catch (Exception $e) {
             $this->redirectWithMessage('/admin', 'Error: ' . $e->getMessage(), 'danger');
