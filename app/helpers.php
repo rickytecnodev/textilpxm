@@ -94,3 +94,71 @@ function productImageUrl($imagen_url, $default = '') {
     }
     return ASSETS_URL . '/images/' . $imagen_url;
 }
+
+/**
+ * Obtener URLs de las imágenes de galería de un producto (archivos {id}_galeria_{n}.{ext}).
+ * No se guardan en BD; se listan por convención desde public/images/productos.
+ * @param int $productId ID del producto
+ * @return array Lista de URLs completas, ordenadas por nombre de archivo
+ */
+function productGalleryUrls($productId) {
+    $productId = (int) $productId;
+    if ($productId <= 0 || !defined('PUBLIC_PATH')) {
+        return [];
+    }
+    $dir = PUBLIC_PATH . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'productos';
+    if (!is_dir($dir)) {
+        return [];
+    }
+    $pattern = str_replace('\\', '/', $dir) . '/' . $productId . '_galeria_*';
+    $files = glob($pattern);
+    if ($files === false) {
+        return [];
+    }
+    sort($files);
+    $urls = [];
+    foreach ($files as $path) {
+        if (is_file($path)) {
+            $basename = basename($path);
+            if (preg_match('/^' . preg_quote((string)$productId, '/') . '_galeria_\d+\.([a-z0-9]+)$/i', $basename)) {
+                $urls[] = ASSETS_URL . '/images/productos/' . $basename;
+            }
+        }
+    }
+    return $urls;
+}
+
+/**
+ * Obtener archivos de galería de un producto para admin (url + nombre de archivo para eliminar).
+ * @param int $productId ID del producto
+ * @return array Lista de ['url' => string, 'filename' => string]
+ */
+function productGalleryFiles($productId) {
+    $productId = (int) $productId;
+    if ($productId <= 0 || !defined('PUBLIC_PATH')) {
+        return [];
+    }
+    $dir = PUBLIC_PATH . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'productos';
+    if (!is_dir($dir)) {
+        return [];
+    }
+    $pattern = str_replace('\\', '/', $dir) . '/' . $productId . '_galeria_*';
+    $files = glob($pattern);
+    if ($files === false) {
+        return [];
+    }
+    sort($files);
+    $items = [];
+    foreach ($files as $path) {
+        if (is_file($path)) {
+            $basename = basename($path);
+            if (preg_match('/^' . preg_quote((string)$productId, '/') . '_galeria_\d+\.([a-z0-9]+)$/i', $basename)) {
+                $items[] = [
+                    'url' => ASSETS_URL . '/images/productos/' . $basename,
+                    'filename' => $basename,
+                ];
+            }
+        }
+    }
+    return $items;
+}

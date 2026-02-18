@@ -96,6 +96,43 @@ $tallas_array = array_filter(array_map('trim', explode(',', $tallas_disponibles)
             <a href="<?php echo BASE_URL; ?>/admin" class="btn btn-dark">Cancelar</a>
         </div>
     </form>
+
+    <?php if ($isEdit && isset($product['id'])): 
+        $galeriaItems = productGalleryFiles($product['id']);
+    ?>
+    <div class="border rounded p-3 bg-light mt-4">
+        <label class="form-label fw-semibold">Galería de fotos (fotos extras del producto)</label>
+        <p class="small text-muted mb-2">Se muestran en la ficha del producto después de la imagen principal. Máximo 20 fotos.</p>
+        <form method="post" action="<?php echo BASE_URL; ?>/admin/galeria/subir/<?php echo (int)$product['id']; ?>" enctype="multipart/form-data" class="d-flex flex-wrap align-items-end gap-2 mb-3">
+            <?php if (!empty($csrf_token)): ?>
+            <input type="hidden" name="_csrf" value="<?php echo htmlspecialchars($csrf_token); ?>">
+            <?php endif; ?>
+            <div class="flex-grow-1" style="min-width: 200px;">
+                <input type="file" class="form-control form-control-sm" name="galeria" accept="image/jpeg,image/png,image/webp,image/gif" required>
+            </div>
+            <button type="submit" class="btn btn-sm btn-dark">Agregar a galería</button>
+        </form>
+        <?php if (!empty($galeriaItems)): ?>
+        <div class="d-flex flex-wrap gap-2">
+            <?php foreach ($galeriaItems as $item): ?>
+            <div class="position-relative d-inline-block">
+                <img src="<?php echo htmlspecialchars($item['url']); ?>" alt="" class="img-thumbnail" style="height: 70px; width: 70px; object-fit: cover;">
+                <form method="post" action="<?php echo BASE_URL; ?>/admin/galeria/eliminar/<?php echo (int)$product['id']; ?>" class="position-absolute top-0 end-0 m-0" style="transform: translate(50%, -50%);">
+                    <?php if (!empty($csrf_token)): ?>
+                    <input type="hidden" name="_csrf" value="<?php echo htmlspecialchars($csrf_token); ?>">
+                    <?php endif; ?>
+                    <input type="hidden" name="archivo" value="<?php echo htmlspecialchars($item['filename']); ?>">
+                    <button type="submit" class="btn btn-danger btn-sm rounded-circle p-0" style="width: 22px; height: 22px; line-height: 1;" title="Eliminar foto" onclick="return confirm('¿Eliminar esta foto de la galería?');">×</button>
+                </form>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php else: ?>
+        <p class="small text-muted mb-0">Aún no hay fotos en la galería. Sube la primera arriba.</p>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
+
     </div>
 </div>
 

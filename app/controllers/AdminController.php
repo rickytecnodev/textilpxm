@@ -70,6 +70,138 @@ class AdminController extends Controller {
         }
     }
 
+    /** Máximo de fotos de galería por producto */
+    private const GALLERY_MAX_FILES = 20;
+
+    /**
+     * Subir una imagen a la galería del producto. Guarda como {id}_galeria_{n}.{ext}
+     * @param string $inputName Nombre del input file (ej: 'galeria')
+     * @param int $productId ID del producto
+     * @return bool true si se subió correctamente
+     */
+    private function uploadProductGalleryImage($inputName, $productId) {
+        if (empty($_FILES[$inputName]['tmp_name']) || $_FILES[$inputName]['error'] !== UPLOAD_ERR_OK) {
+            return false;
+        }
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $_FILES[$inputName]['tmp_name']);
+        finfo_close($finfo);
+        if (!in_array($mime, self::$productImageTypes, true)) {
+            return false;
+        }
+        $dir = PUBLIC_PATH . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'productos';
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        $pattern = str_replace('\\', '/', $dir) . '/' . $productId . '_galeria_*';
+        $existing = glob($pattern);
+        $nextNum = $existing === false ? 1 : (count($existing) + 1);
+        if ($nextNum > self::GALLERY_MAX_FILES) {
+            return false;
+        }
+        $ext = (new SplFileInfo($_FILES[$inputName]['name']))->getExtension();
+        $ext = preg_replace('/[^a-z0-9]/i', '', $ext) ?: 'jpg';
+        $dest = $dir . DIRECTORY_SEPARATOR . $productId . '_galeria_' . $nextNum . '.' . $ext;
+        return move_uploaded_file($_FILES[$inputName]['tmp_name'], $dest);
+    }
+
+    /**
+     * Eliminar un archivo de galería del producto. Solo permite nombres {id}_galeria_{n}.{ext}
+     */
+    private function deleteProductGalleryFile($productId, $filename) {
+        $productId = (int) $productId;
+        $filename = basename(trim($filename ?? ''));
+        if ($filename === '' || $productId <= 0) {
+            return false;
+        }
+        if (!preg_match('/^' . preg_quote((string)$productId, '/') . '_galeria_\d+\.[a-z0-9]+$/i', $filename)) {
+            return false;
+        }
+        $path = PUBLIC_PATH . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'productos' . DIRECTORY_SEPARATOR . $filename;
+        $basePath = realpath(PUBLIC_PATH . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'productos');
+        $realPath = realpath($path);
+        if ($realPath !== false && $basePath !== false && strpos($realPath, $basePath) === 0 && is_file($realPath)) {
+            return @unlink($realPath);
+        }
+        return false;
+    }
+
+    /**
+     * Eliminar todas las imágenes de galería de un producto
+     */
+    private function deleteProductGalleryFiles($productId) {
+        $productId = (int) $productId;
+        if ($productId <= 0) {
+            return;
+        }
+        $dir = PUBLIC_PATH . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'productos';
+        if (!is_dir($dir)) {
+            return;
+        }
+        $pattern = str_replace('\\', '/', $dir) . '/' . $productId . '_galeria_*';
+        $files = glob($pattern);
+        if ($files === false) {
+            return;
+        }
+        foreach ($files as $path) {
+            if (is_file($path)) {
+                @unlink($path);
+            }
+        }
+    }
+
+    /**
+     * Galería de producto: subir o eliminar fotos. POST obligatorio.
+     * /admin/galeria/subir/{id} → subir | /admin/galeria/eliminar/{id} + POST archivo → eliminar
+     */
+    public function galeria($action, $id) {
+        $this->requireAdmin();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect(BASE_URL . '/admin');
+            return;
+        }
+        $productId = (int) $id;
+        if ($productId <= 0) {
+            $this->redirectWithMessage('/admin', 'ID no válido', 'danger');
+            return;
+        }
+        $product = $this->productModel->getById($productId);
+        if (!$product) {
+            $this->redirectWithMessage('/admin', 'Producto no encontrado', 'danger');
+            return;
+        }
+        $redirectEdit = '/admin/editar/' . $productId;
+
+        if ($action === 'subir') {
+            if (!csrf_verify()) {
+                $this->redirectWithMessage($redirectEdit, 'Sesión inválida. Intenta de nuevo.', 'danger');
+                return;
+            }
+            if ($this->uploadProductGalleryImage('galeria', $productId)) {
+                $this->redirectWithMessage($redirectEdit, 'Foto agregada a la galería', 'success');
+            } else {
+                $this->redirectWithMessage($redirectEdit, 'No se pudo subir la imagen o se alcanzó el límite de ' . self::GALLERY_MAX_FILES . ' fotos.', 'danger');
+            }
+            return;
+        }
+
+        if ($action === 'eliminar') {
+            if (!csrf_verify()) {
+                $this->redirectWithMessage($redirectEdit, 'Sesión inválida. Intenta de nuevo.', 'danger');
+                return;
+            }
+            $archivo = trim($_POST['archivo'] ?? '');
+            if ($this->deleteProductGalleryFile($productId, $archivo)) {
+                $this->redirectWithMessage($redirectEdit, 'Foto eliminada de la galería', 'success');
+            } else {
+                $this->redirectWithMessage($redirectEdit, 'No se pudo eliminar la foto', 'danger');
+            }
+            return;
+        }
+
+        $this->redirect(BASE_URL . '/admin');
+    }
+
     /**
      * Comprobar que el usuario está logueado y es admin
      */
@@ -593,6 +725,7 @@ class AdminController extends Controller {
             return;
         }
         $this->deleteProductImageFile($product['imagen_url'] ?? '');
+        $this->deleteProductGalleryFiles($id);
         try {
             $this->productModel->deletePermanent($id);
             $this->redirectWithMessage('/admin', 'Producto eliminado correctamente', 'success');

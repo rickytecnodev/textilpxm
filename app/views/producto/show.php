@@ -11,6 +11,11 @@ if (empty($product) || !isset($product['id'])) {
     exit;
 }
 
+$mainImageUrl = productImageUrl($product['imagen_url'] ?? '');
+$galleryUrls = productGalleryUrls($product['id']);
+$allImages = array_merge([$mainImageUrl], $galleryUrls);
+$hasMultipleImages = count($allImages) > 1;
+
 ?>
 <div class="js-page-zone d-none" data-page="product-detail"></div>
 <style>
@@ -40,6 +45,24 @@ if (empty($product) || !isset($product['id'])) {
     .product-detail-info p {
         line-height: 1.8;
     }
+    /* Fondo en controles del carrusel para que se vean en imágenes claras */
+    #productGalleryCarousel .carousel-control-prev,
+    #productGalleryCarousel .carousel-control-next {
+        width: 3rem;
+        height: 3rem;
+        top: 50%;
+        transform: translateY(-50%);
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.5);
+        opacity: 1;
+        margin: 0 0.5rem;
+    }
+    #productGalleryCarousel .carousel-control-prev { left: 0; }
+    #productGalleryCarousel .carousel-control-next { right: 0; }
+    #productGalleryCarousel .carousel-control-prev:hover,
+    #productGalleryCarousel .carousel-control-next:hover {
+        background-color: rgba(0, 0, 0, 0.7);
+    }
 </style>
 
 <div class="mt-5 pt-5" style="min-height: 70vh;">
@@ -58,12 +81,37 @@ if (empty($product) || !isset($product['id'])) {
         </div>
         
         <div class="row g-5 mb-5">
-            <!-- Imagen del producto -->
+            <!-- Imagen del producto: principal + galería en carrusel -->
             <div class="col-lg-6">
                 <div class="product-detail-image-container rounded shadow">
-<img src="<?php echo htmlspecialchars(productImageUrl($product['imagen_url'] ?? '')); ?>"
-                         alt="<?php echo htmlspecialchars($product['nombre']); ?>"
-                         class="product-detail-image rounded">
+                    <div id="productGalleryCarousel" class="carousel slide" data-bs-ride="<?php echo $hasMultipleImages ? 'carousel' : 'false'; ?>">
+                        <?php if ($hasMultipleImages): ?>
+                        <div class="carousel-indicators">
+                            <?php foreach ($allImages as $i => $url): ?>
+                            <button type="button" data-bs-target="#productGalleryCarousel" data-bs-slide-to="<?php echo $i; ?>" class="<?php echo $i === 0 ? 'active' : ''; ?>" aria-current="<?php echo $i === 0 ? 'true' : 'false'; ?>" aria-label="Imagen <?php echo $i + 1; ?>"></button>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php endif; ?>
+                        <div class="carousel-inner">
+                            <?php foreach ($allImages as $i => $url): ?>
+                            <div class="carousel-item <?php echo $i === 0 ? 'active' : ''; ?>">
+                                <img src="<?php echo htmlspecialchars($url); ?>"
+                                     alt="<?php echo htmlspecialchars($product['nombre']); ?> — <?php echo $i + 1; ?>"
+                                     class="product-detail-image rounded d-block w-100" loading="<?php echo $i === 0 ? 'eager' : 'lazy'; ?>">
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php if ($hasMultipleImages): ?>
+                        <button class="carousel-control-prev d-flex align-items-center justify-content-center" type="button" data-bs-target="#productGalleryCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Anterior</span>
+                        </button>
+                        <button class="carousel-control-next d-flex align-items-center justify-content-center" type="button" data-bs-target="#productGalleryCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Siguiente</span>
+                        </button>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
             
